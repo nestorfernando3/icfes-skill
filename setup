@@ -54,13 +54,17 @@ choose() {
   shift
   local opts=("$@")
   local i choice
-  echo
-  echo "$prompt"
+  echo >&2
+  echo "$prompt" >&2
   for i in "${!opts[@]}"; do
-    printf "  %d) %s\n" "$((i + 1))" "${opts[$i]}"
+    printf "  %d) %s\n" "$((i + 1))" "${opts[$i]}" >&2
   done
-  printf "> "
-  read -r choice
+  printf "> " >&2
+  if [ -r /dev/tty ]; then
+    read -r choice </dev/tty
+  else
+    read -r choice
+  fi
   case "$choice" in
     ''|*[!0-9]*) echo "Seleccion invalida" >&2; exit 1 ;;
   esac
@@ -163,8 +167,12 @@ if [ -z "$TARGET" ] || [ -z "$SCOPE" ]; then
   TARGET="${TARGET%% *}"
   SCOPE="$(choose "Alcance:" "user" "project")"
   if [ "$SCOPE" = "project" ]; then
-    printf "Proyecto [%s]: " "$PROJECT_DIR"
-    read -r answer
+    printf "Proyecto [%s]: " "$PROJECT_DIR" >&2
+    if [ -r /dev/tty ]; then
+      read -r answer </dev/tty
+    else
+      read -r answer
+    fi
     [ -n "${answer:-}" ] && PROJECT_DIR="$answer"
   fi
 fi
