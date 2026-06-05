@@ -7,7 +7,7 @@ Skill en español para crear, criticar, revisar y exportar paquetes de items est
 Cuando repo tenga release:
 
 ```bash
-brew tap nestor/icfes-skill
+brew tap nestorfernando3/icfes-skill
 brew install icfes-skill
 icfes-skill install
 ```
@@ -15,7 +15,7 @@ icfes-skill install
 Mientras desarrollas desde repo local:
 
 ```bash
-git clone <URL_DEL_REPO> icfes-skill
+git clone https://github.com/nestorfernando3/icfes-skill.git
 cd icfes-skill
 ./setup
 ```
@@ -97,7 +97,7 @@ curl -L -o icfes-skill-v0.1.0.tar.gz https://github.com/<usuario>/icfes-skill/ar
 shasum -a 256 icfes-skill-v0.1.0.tar.gz
 ```
 
-4. Reemplazar `homepage`, `url`, `sha256` en `Formula/icfes-skill.rb`.
+4. Reemplazar `homepage`, `url`, `sha256` en `Formula/icfes-skill.rb` si cambia repo o tag.
 5. Crear tap Homebrew `homebrew-icfes-skill` con formula, o usar:
 
 ```bash
