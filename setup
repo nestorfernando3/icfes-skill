@@ -39,6 +39,7 @@ EOF
 }
 
 TARGET=""
+TARGETS=""
 SCOPE=""
 PROJECT_DIR="$(pwd)"
 COPY_MODE="copy"
@@ -133,6 +134,90 @@ choose() {
   done
 }
 
+choose_multi() {
+  local prompt="$1"
+  shift
+  local opts=("$@")
+  local i choice token opt opt_name target normalized found out seen
+  while true; do
+    echo >&2
+    echo "${BOLD}${prompt}${RESET}" >&2
+    for i in "${!opts[@]}"; do
+      printf "  ${CYAN}%d${RESET}) %s\n" "$((i + 1))" "${opts[$i]}" >&2
+    done
+    printf "${DIM}Enter = opcion 1. Varios: 1,2,6 o codex claude. all = todos. q = salir:${RESET} " >&2
+    if [ -t 0 ] && [ -r /dev/tty ]; then
+      read -r choice </dev/tty
+    else
+      read -r choice
+    fi
+    if [ -z "$choice" ]; then
+      echo "$(normalize_target "${opts[0]%% *}")"
+      return 0
+    fi
+    case "$choice" in
+      q|quit|exit|salir)
+        echo "__exit__"
+        return 0
+        ;;
+      all|todos|todas)
+        out=""
+        seen=""
+        for opt in "${opts[@]}"; do
+          target="$(normalize_target "${opt%% *}")"
+          case " $seen " in
+            *" $target "*) ;;
+            *) out="${out:+$out }$target"; seen="${seen:+$seen }$target" ;;
+          esac
+        done
+        echo "$out"
+        return 0
+        ;;
+    esac
+
+    out=""
+    seen=""
+    found=1
+    choice="${choice//,/ }"
+    choice="${choice//;/ }"
+    for token in $choice; do
+      normalized=""
+      case "$token" in
+        '' ) continue ;;
+        *[!0-9]*)
+          for opt in "${opts[@]}"; do
+            opt_name="${opt%% *}"
+            if [ "$token" = "$opt_name" ] || [ "$token" = "$opt" ]; then
+              normalized="$(normalize_target "$opt_name")"
+              break
+            fi
+          done
+          ;;
+        *)
+          if [ "$token" -ge 1 ] && [ "$token" -le "${#opts[@]}" ]; then
+            normalized="$(normalize_target "${opts[$((token - 1))]%% *}")"
+          fi
+          ;;
+      esac
+
+      if [ -z "$normalized" ]; then
+        echo "${RED}Seleccion invalida:${RESET} $token" >&2
+        found=0
+        break
+      fi
+      case " $seen " in
+        *" $normalized "*) ;;
+        *) out="${out:+$out }$normalized"; seen="${seen:+$seen }$normalized" ;;
+      esac
+    done
+
+    if [ "$found" -eq 1 ] && [ -n "$out" ]; then
+      echo "$out"
+      return 0
+    fi
+  done
+}
+
 prompt_path() {
   local default_path="$1"
   local answer
@@ -145,12 +230,12 @@ prompt_path() {
   [ -n "${answer:-}" ] && echo "$answer" || echo "$default_path"
 }
 
-pick_target() {
+pick_targets() {
   local detected
   detected="$(detect_target)"
   case "$detected" in
     codex)
-      choose "IDE/agente destino:" \
+      choose_multi "IDE/agente destino (puedes escoger varios):" \
         "codex (detectado)" \
         "claude" \
         "gemini" \
@@ -161,7 +246,7 @@ pick_target() {
         "agents"
       ;;
     claude)
-      choose "IDE/agente destino:" \
+      choose_multi "IDE/agente destino (puedes escoger varios):" \
         "claude (detectado)" \
         "codex" \
         "gemini" \
@@ -172,7 +257,7 @@ pick_target() {
         "agents"
       ;;
     gemini)
-      choose "IDE/agente destino:" \
+      choose_multi "IDE/agente destino (puedes escoger varios):" \
         "gemini (detectado)" \
         "codex" \
         "claude" \
@@ -183,7 +268,7 @@ pick_target() {
         "agents"
       ;;
     opencode)
-      choose "IDE/agente destino:" \
+      choose_multi "IDE/agente destino (puedes escoger varios):" \
         "opencode (detectado)" \
         "codex" \
         "claude" \
@@ -194,7 +279,7 @@ pick_target() {
         "agents"
       ;;
     kiro)
-      choose "IDE/agente destino:" \
+      choose_multi "IDE/agente destino (puedes escoger varios):" \
         "kiro (detectado)" \
         "codex" \
         "claude" \
@@ -205,7 +290,7 @@ pick_target() {
         "agents"
       ;;
     *)
-      choose "IDE/agente destino:" \
+      choose_multi "IDE/agente destino (puedes escoger varios):" \
         "codex" \
         "claude" \
         "gemini" \
@@ -248,22 +333,22 @@ run_menu() {
 
   case "$action" in
     global)
-      picked="$(pick_target)"
+      picked="$(pick_targets)"
       if [ "$picked" = "__exit__" ]; then echo "${YELLOW}Instalacion cancelada.${RESET}"; exit 0; fi
-      TARGET="$(normalize_target "${picked%% *}")"
+      TARGETS="$picked"
       SCOPE="user"
       ;;
     current)
-      picked="$(pick_target)"
+      picked="$(pick_targets)"
       if [ "$picked" = "__exit__" ]; then echo "${YELLOW}Instalacion cancelada.${RESET}"; exit 0; fi
-      TARGET="$(normalize_target "${picked%% *}")"
+      TARGETS="$picked"
       SCOPE="project"
       PROJECT_DIR="$(pwd)"
       ;;
     other)
-      picked="$(pick_target)"
+      picked="$(pick_targets)"
       if [ "$picked" = "__exit__" ]; then echo "${YELLOW}Instalacion cancelada.${RESET}"; exit 0; fi
-      TARGET="$(normalize_target "${picked%% *}")"
+      TARGETS="$picked"
       SCOPE="project"
       PROJECT_DIR="$(prompt_path "$PROJECT_DIR")"
       ;;
@@ -377,6 +462,20 @@ if [ -z "$TARGET" ] || [ -z "$SCOPE" ]; then
   run_menu
 fi
 
-TARGET="$(normalize_target "$TARGET")"
+if [ -z "$TARGETS" ] && { [ "${TARGET#*,}" != "$TARGET" ] || [ "${TARGET#* }" != "$TARGET" ]; }; then
+  raw_targets="${TARGET//,/ }"
+  for raw_target in $raw_targets; do
+    TARGETS="${TARGETS:+$TARGETS }$(normalize_target "$raw_target")"
+  done
+  TARGET=""
+fi
+
 SCOPE="$(normalize_scope "$SCOPE")"
-run_install "$TARGET" "$SCOPE" "$PROJECT_DIR"
+if [ -n "$TARGETS" ]; then
+  for target in $TARGETS; do
+    run_install "$target" "$SCOPE" "$PROJECT_DIR"
+  done
+else
+  TARGET="$(normalize_target "$TARGET")"
+  run_install "$TARGET" "$SCOPE" "$PROJECT_DIR"
+fi

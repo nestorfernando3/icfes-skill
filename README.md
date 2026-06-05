@@ -65,6 +65,14 @@ IDE:
 8) .agents portable
 ```
 
+Puedes escoger varios IDEs a la vez:
+
+```text
+1,2,3,6
+codex claude opencode
+all
+```
+
 ## Instalacion En Un Comando
 
 Mac con Homebrew:
@@ -77,6 +85,12 @@ Tambien puedes pasar opciones y evitar menu:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --target codex --scope user
+```
+
+Varios targets sin menu:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --target "codex,claude,opencode" --scope user
 ```
 
 Por proyecto:
