@@ -98,10 +98,16 @@ Cuando varios IDEs comparten la misma carpeta portable `.agents`, el instalador 
 
 ## Instalacion En Un Comando
 
-Mac con Homebrew:
+Directo desde repo, sin Homebrew:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)"
+```
+
+Apuntando explicitamente al repo:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --repo https://github.com/nestorfernando3/icfes-skill.git
 ```
 
 Tambien puedes pasar opciones y evitar menu:
@@ -114,6 +120,12 @@ Varios targets sin menu:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --target "codex,claude,opencode" --scope user
+```
+
+Con Homebrew explicito:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --homebrew
 ```
 
 Por proyecto:
