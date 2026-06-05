@@ -432,6 +432,26 @@ install_agent() {
   esac
 }
 
+agent_dir() {
+  local target="$1"
+  case "$target" in
+    codex) echo "$HOME/.codex/agents" ;;
+    claude) echo "$HOME/.claude/agents" ;;
+    gemini) echo "$HOME/.gemini/agents" ;;
+    opencode) echo "$HOME/.config/opencode/agents" ;;
+    kiro) echo "$HOME/.kiro/agents" ;;
+    goose) echo "$HOME/.config/goose/agents" ;;
+    *) echo "$HOME/.agents/agents" ;;
+  esac
+}
+
+validate_target() {
+  case "$1" in
+    codex|claude|gemini|cursor|windsurf|opencode|kiro|aider|goose|zed|vscode|cline|roo|continue|trae|augment|amp|agents) ;;
+    *) echo "Target invalido: $1" >&2; exit 1 ;;
+  esac
+}
+
 run_install() {
   local target="$1"
   local scope="$2"
@@ -463,6 +483,64 @@ run_install() {
   fi
 }
 
+run_install_many() {
+  local targets="$1"
+  local scope="$2"
+  local project="$3"
+  local target base dst install_keys install_key agent_base agent_key agent_keys
+  local installed_rows=""
+
+  need_source
+  case "$scope" in
+    user|project) ;;
+    *) echo "Scope invalido: $scope" >&2; exit 1 ;;
+  esac
+
+  install_keys=""
+  agent_keys=""
+  for target in $targets; do
+    validate_target "$target"
+    base="$(dest_dir "$target" "$scope" "$project")"
+    dst="$base/$SKILL_NAME"
+    install_key="$dst"
+    if ! printf "%s" "$install_keys" | grep -Fxq "$install_key" 2>/dev/null; then
+        mkdir -p "$base"
+        install_dir "$ROOT/skills/$SKILL_NAME" "$dst"
+        install_keys="${install_keys}${install_key}"$'\n'
+    fi
+    installed_rows="${installed_rows}${target}|${dst}"$'\n'
+
+    if [ "$scope" = "project" ]; then
+      agent_base="$project/agents"
+    else
+      agent_base="$(agent_dir "$target")"
+    fi
+    agent_key="$agent_base/$AGENT_NAME"
+    if ! printf "%s" "$agent_keys" | grep -Fxq "$agent_key" 2>/dev/null; then
+        mkdir -p "$agent_base"
+        [ -f "$ROOT/agents/$AGENT_NAME" ] && cp "$ROOT/agents/$AGENT_NAME" "$agent_key"
+        agent_keys="${agent_keys}${agent_key}"$'\n'
+    fi
+  done
+
+  echo
+  echo "${GREEN}ICFES skill instalado.${RESET}"
+  echo "  scope: $scope"
+  echo "  rutas instaladas:"
+  printf "%s" "$install_keys" | while IFS= read -r install_key; do
+    [ -n "$install_key" ] || continue
+    printf "    - %s\n" "$install_key"
+  done
+  echo "  targets:"
+  printf "%s" "$installed_rows" | while IFS='|' read -r target dst; do
+    [ -n "$target" ] || continue
+    printf "    - %-9s -> %s\n" "$target" "$dst"
+  done
+  if [ "$scope" = "project" ]; then
+    echo "  agente: $project/agents/$AGENT_NAME"
+  fi
+}
+
 if [ -z "$TARGET" ] || [ -z "$SCOPE" ]; then
   run_menu
 fi
@@ -477,9 +555,7 @@ fi
 
 SCOPE="$(normalize_scope "$SCOPE")"
 if [ -n "$TARGETS" ]; then
-  for target in $TARGETS; do
-    run_install "$target" "$SCOPE" "$PROJECT_DIR"
-  done
+  run_install_many "$TARGETS" "$SCOPE" "$PROJECT_DIR"
 else
   TARGET="$(normalize_target "$TARGET")"
   run_install "$TARGET" "$SCOPE" "$PROJECT_DIR"

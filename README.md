@@ -83,6 +83,8 @@ codex claude opencode
 all
 ```
 
+Cuando varios IDEs comparten la misma carpeta portable `.agents`, el instalador copia el skill una sola vez y muestra que targets apuntan a esa misma ruta.
+
 ## Instalacion En Un Comando
 
 Mac con Homebrew:
