@@ -15,6 +15,7 @@ class IcfesSkill < Formula
     <<~EOS
       Instalar skill:
         icfes-skill install
+        # brew install/reinstall solo instala CLI. Este comando abre menu TUI.
 
       Global Codex:
         icfes-skill install --target codex --scope user
