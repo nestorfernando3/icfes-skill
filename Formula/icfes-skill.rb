@@ -1,9 +1,9 @@
 class IcfesSkill < Formula
   desc "Skill para crear, revisar y exportar items estilo ICFES"
   homepage "https://github.com/nestorfernando3/icfes-skill"
-  url "https://github.com/nestorfernando3/icfes-skill/archive/refs/tags/v0.1.1.tar.gz"
-  version "0.1.1"
-  sha256 "cb744fe47b9c8a5a4448bb2cb2a07cd74ace309b373f1aca5a16a0f957bfd2fa"
+  url "https://github.com/nestorfernando3/icfes-skill/archive/refs/tags/v0.1.2.tar.gz"
+  version "0.1.2"
+  sha256 "d6e0b0c368500c532459931e61b1e9dfaab91c5fe5ae5d79463a6f93380edac8"
   license "MIT"
 
   def install
