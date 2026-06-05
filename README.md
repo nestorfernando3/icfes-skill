@@ -33,6 +33,18 @@ No instala servicios, no deja procesos corriendo, no modifica proyectos salvo cu
 
 ## Instalacion Recomendada
 
+Directo desde repo, sin Homebrew:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --repo https://github.com/nestorfernando3/icfes-skill.git
+```
+
+Esto clona/actualiza repo en `~/.icfes-skill/repo` y abre el instalador.
+
+Guia completa: [docs/INSTALL.md](docs/INSTALL.md)
+
+## Homebrew
+
 Con Homebrew:
 
 ```bash
@@ -103,6 +115,8 @@ Directo desde repo, sin Homebrew:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)"
 ```
+
+Por defecto usa repo oficial y cache `~/.icfes-skill/repo`.
 
 Apuntando explicitamente al repo:
 
