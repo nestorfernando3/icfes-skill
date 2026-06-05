@@ -76,7 +76,10 @@ need_source() {
 }
 
 normalize_target() {
-  case "$1" in
+  local value
+  value="$(printf "%s" "$1" | tr -d '\r')"
+  value="${value%% *}"
+  case "$value" in
     codex|Codex) echo "codex" ;;
     claude|Claude|claude-code|"Claude Code") echo "claude" ;;
     gemini|Gemini) echo "gemini" ;;
@@ -95,7 +98,7 @@ normalize_target() {
     augment|Augment) echo "augment" ;;
     amp|Amp|AMP) echo "amp" ;;
     agents|Agents|portable|Portable|other|Other) echo "agents" ;;
-    *) echo "$1" ;;
+    *) echo "$value" ;;
   esac
 }
 
@@ -536,9 +539,11 @@ agent_dir() {
 }
 
 validate_target() {
-  case "$1" in
+  local target
+  target="$(normalize_target "$1")"
+  case "$target" in
     codex|claude|gemini|cursor|windsurf|opencode|kiro|aider|goose|zed|vscode|cline|roo|continue|trae|augment|amp|agents) ;;
-    *) echo "Target invalido: $1" >&2; exit 1 ;;
+    *) echo "Target invalido: '$1'" >&2; exit 1 ;;
   esac
 }
 
@@ -589,6 +594,7 @@ run_install_many() {
   install_keys=""
   agent_keys=""
   for target in $targets; do
+    target="$(normalize_target "$target")"
     validate_target "$target"
     base="$(dest_dir "$target" "$scope" "$project")"
     dst="$base/$SKILL_NAME"
