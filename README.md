@@ -43,6 +43,24 @@ icfes-skill install
 
 El ultimo comando abre menu TUI para elegir agente y alcance.
 
+Menu:
+
+```text
+ICFES Skill Setup
+
+1) global  - instalar para todos los proyectos
+2) current - instalar en proyecto actual
+3) other   - instalar en otro proyecto
+4) doctor  - verificar paquete
+5) exit
+
+IDE:
+1) Codex
+2) Claude
+3) Gemini
+4) .agents portable
+```
+
 ## Instalacion En Un Comando
 
 Mac con Homebrew:

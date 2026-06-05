@@ -114,6 +114,81 @@ choose() {
   done
 }
 
+prompt_path() {
+  local default_path="$1"
+  local answer
+  printf "Ruta del proyecto [%s]: " "$default_path" >&2
+  if [ -t 0 ] && [ -r /dev/tty ]; then
+    read -r answer </dev/tty
+  else
+    read -r answer
+  fi
+  [ -n "${answer:-}" ] && echo "$answer" || echo "$default_path"
+}
+
+pick_target() {
+  local detected
+  detected="$(detect_target)"
+  case "$detected" in
+    codex) choose "IDE/agente destino:" "codex (detectado)" "claude" "gemini" "agents" ;;
+    claude) choose "IDE/agente destino:" "claude (detectado)" "codex" "gemini" "agents" ;;
+    gemini) choose "IDE/agente destino:" "gemini (detectado)" "codex" "claude" "agents" ;;
+    *) choose "IDE/agente destino:" "codex" "claude" "gemini" "agents" ;;
+  esac
+}
+
+doctor() {
+  need_source
+  echo
+  echo "ICFES Skill OK."
+  echo "  root:   $ROOT"
+  echo "  skill:  $ROOT/skills/$SKILL_NAME"
+  [ -f "$ROOT/agents/$AGENT_NAME" ] && echo "  agente: $ROOT/agents/$AGENT_NAME"
+}
+
+run_menu() {
+  local action picked
+  echo "ICFES Skill Setup"
+  echo "-----------------"
+  echo "Instala skill para Codex, Claude, Gemini o .agents portable."
+
+  action="$(choose "Que quieres hacer:" \
+    "global (instalar para todos los proyectos)" \
+    "current (instalar en este proyecto)" \
+    "other (instalar en otro proyecto)" \
+    "doctor (verificar instalacion)" \
+    "exit (salir)")"
+  action="${action%% *}"
+
+  case "$action" in
+    global)
+      picked="$(pick_target)"
+      TARGET="$(normalize_target "${picked%% *}")"
+      SCOPE="user"
+      ;;
+    current)
+      picked="$(pick_target)"
+      TARGET="$(normalize_target "${picked%% *}")"
+      SCOPE="project"
+      PROJECT_DIR="$(pwd)"
+      ;;
+    other)
+      picked="$(pick_target)"
+      TARGET="$(normalize_target "${picked%% *}")"
+      SCOPE="project"
+      PROJECT_DIR="$(prompt_path "$PROJECT_DIR")"
+      ;;
+    doctor)
+      doctor
+      exit 0
+      ;;
+    exit)
+      echo "Instalacion cancelada."
+      exit 0
+      ;;
+  esac
+}
+
 detect_target() {
   command -v codex >/dev/null 2>&1 && { echo "codex"; return; }
   command -v claude >/dev/null 2>&1 && { echo "claude"; return; }
@@ -200,35 +275,7 @@ run_install() {
 }
 
 if [ -z "$TARGET" ] || [ -z "$SCOPE" ]; then
-  echo "Instalador ICFES Skill"
-  echo "---------------------"
-  detected="$(detect_target)"
-  case "$detected" in
-    codex)
-      TARGET="$(choose "IDE/agente destino (numero o nombre):" "codex (detectado)" "claude" "gemini" "agents")"
-      ;;
-    claude)
-      TARGET="$(choose "IDE/agente destino (numero o nombre):" "claude (detectado)" "codex" "gemini" "agents")"
-      ;;
-    gemini)
-      TARGET="$(choose "IDE/agente destino (numero o nombre):" "gemini (detectado)" "codex" "claude" "agents")"
-      ;;
-    *)
-      TARGET="$(choose "IDE/agente destino (numero o nombre):" "codex" "claude" "gemini" "agents")"
-      ;;
-  esac
-  TARGET="$(normalize_target "${TARGET%% *}")"
-  SCOPE="$(choose "Alcance de instalacion (numero o nombre):" "user (global)" "project (proyecto especifico)")"
-  SCOPE="$(normalize_scope "${SCOPE%% *}")"
-  if [ "$SCOPE" = "project" ]; then
-    printf "Proyecto [%s]: " "$PROJECT_DIR" >&2
-    if [ -t 0 ] && [ -r /dev/tty ]; then
-      read -r answer </dev/tty
-    else
-      read -r answer
-    fi
-    [ -n "${answer:-}" ] && PROJECT_DIR="$answer"
-  fi
+  run_menu
 fi
 
 TARGET="$(normalize_target "$TARGET")"
