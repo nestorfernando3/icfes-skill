@@ -72,7 +72,10 @@ run_homebrew_install() {
 
 script_root() {
   local source dir
-  source="${BASH_SOURCE[0]}"
+  source="${BASH_SOURCE[0]:-$0}"
+  case "$source" in
+    ""|-*) pwd -P; return 0 ;;
+  esac
   while [ -L "$source" ]; do
     dir="$(cd -P "$(dirname "$source")" && pwd)"
     source="$(readlink "$source")"
