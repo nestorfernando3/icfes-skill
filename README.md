@@ -75,7 +75,18 @@ IDE:
 18) .agents portable
 ```
 
-Puedes escoger varios IDEs a la vez:
+En terminal interactiva, el selector usa checkbox:
+
+```text
+Flechas/j/k = mover
+Espacio = marcar/desmarcar
+Enter = instalar
+a = todos
+n = ninguno
+q = salir
+```
+
+En modo no interactivo tambien puedes escoger varios:
 
 ```text
 1,2,3,6

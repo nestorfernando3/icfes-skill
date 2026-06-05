@@ -154,11 +154,101 @@ choose() {
   done
 }
 
+render_multi_menu() {
+  local prompt="$1"
+  local cursor="$2"
+  shift 2
+  local opts=("$@")
+  local i mark pointer
+  clear >&2
+  echo "${BOLD}ICFES Skill Setup${RESET}" >&2
+  echo "${DIM}-----------------${RESET}" >&2
+  echo "${BOLD}${prompt}${RESET}" >&2
+  echo "${DIM}Flechas/j/k = mover. Espacio = marcar. Enter = instalar. a = todos. n = ninguno. q = salir.${RESET}" >&2
+  echo >&2
+  for i in "${!opts[@]}"; do
+    pointer=" "
+    [ "$i" -eq "$cursor" ] && pointer="${CYAN}>${RESET}"
+    mark=" "
+    [ "${SELECTED[$i]:-0}" -eq 1 ] && mark="${GREEN}x${RESET}"
+    printf " %b [%b] %s\n" "$pointer" "$mark" "${opts[$i]}" >&2
+  done
+}
+
+choose_multi_interactive() {
+  local prompt="$1"
+  shift
+  local opts=("$@")
+  local cursor=0 key rest i out target seen
+  SELECTED=()
+  for i in "${!opts[@]}"; do SELECTED[$i]=0; done
+  SELECTED[0]=1
+
+  tput civis 2>/dev/null || true
+  while true; do
+    render_multi_menu "$prompt" "$cursor" "${opts[@]}"
+    IFS= read -rsn1 key </dev/tty || key=""
+    case "$key" in
+      $'\x1b')
+        IFS= read -rsn2 rest </dev/tty || rest=""
+        case "$rest" in
+          "[A") cursor=$((cursor - 1)) ;;
+          "[B") cursor=$((cursor + 1)) ;;
+        esac
+        ;;
+      k|K) cursor=$((cursor - 1)) ;;
+      j|J) cursor=$((cursor + 1)) ;;
+      " ")
+        if [ "${SELECTED[$cursor]:-0}" -eq 1 ]; then
+          SELECTED[$cursor]=0
+        else
+          SELECTED[$cursor]=1
+        fi
+        ;;
+      a|A)
+        for i in "${!opts[@]}"; do SELECTED[$i]=1; done
+        ;;
+      n|N)
+        for i in "${!opts[@]}"; do SELECTED[$i]=0; done
+        ;;
+      q|Q)
+        tput cnorm 2>/dev/null || true
+        echo "__exit__"
+        return 0
+        ;;
+      ""|$'\n'|$'\r')
+        out=""
+        seen=""
+        for i in "${!opts[@]}"; do
+          [ "${SELECTED[$i]:-0}" -eq 1 ] || continue
+          target="$(normalize_target "${opts[$i]%% *}")"
+          case " $seen " in
+            *" $target "*) ;;
+            *) out="${out:+$out }$target"; seen="${seen:+$seen }$target" ;;
+          esac
+        done
+        if [ -n "$out" ]; then
+          tput cnorm 2>/dev/null || true
+          clear >&2
+          echo "$out"
+          return 0
+        fi
+        ;;
+    esac
+    [ "$cursor" -lt 0 ] && cursor=$((${#opts[@]} - 1))
+    [ "$cursor" -ge "${#opts[@]}" ] && cursor=0
+  done
+}
+
 choose_multi() {
   local prompt="$1"
   shift
   local opts=("$@")
   local i choice token opt opt_name target normalized found out seen
+  if [ -t 0 ] && [ -r /dev/tty ]; then
+    choose_multi_interactive "$prompt" "${opts[@]}"
+    return 0
+  fi
   while true; do
     echo >&2
     echo "${BOLD}${prompt}${RESET}" >&2
