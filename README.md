@@ -43,6 +43,26 @@ icfes-skill install
 
 El ultimo comando abre menu TUI para elegir agente y alcance.
 
+## Instalacion En Un Comando
+
+Mac con Homebrew:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)"
+```
+
+Tambien puedes pasar opciones y evitar menu:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --target codex --scope user
+```
+
+Por proyecto:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/nestorfernando3/icfes-skill/main/install.sh)" -- --target codex --scope project --project /ruta/del/proyecto
+```
+
 ## Instalacion Global
 
 Usa global cuando quieres tener skill disponible en cualquier conversacion/proyecto del mismo equipo.
