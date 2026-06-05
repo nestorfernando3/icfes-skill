@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="${ICFES_SKILL_ROOT:-$(cd "$(dirname "$0")/.." && pwd -P)}"
+
+case "${1:-}" in
+  install|setup|"")
+    shift || true
+    exec "$ROOT/setup" "$@"
+    ;;
+  where)
+    echo "$ROOT"
+    ;;
+  doctor)
+    test -f "$ROOT/skills/icfes-item-workflow/SKILL.md"
+    test -f "$ROOT/agents/icfes-item-coach.md"
+    echo "OK: $ROOT"
+    ;;
+  *)
+    cat <<'EOF'
+Uso:
+  icfes-skill install             # menu TUI
+  icfes-skill install --target codex --scope user
+  icfes-skill install --target codex --scope project --project .
+  icfes-skill where
+  icfes-skill doctor
+EOF
+    exit 1
+    ;;
+esac

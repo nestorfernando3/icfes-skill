@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ICFES Item Package Array",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "item_id",
+      "status",
+      "source_refs",
+      "grounded_assumptions",
+      "alignment",
+      "difficulty",
+      "context",
+      "enunciado",
+      "options",
+      "clave",
+      "distractor_rationales",
+      "quality_gates",
+      "warnings",
+      "revision_notes",
+      "student_view"
+    ],
+    "properties": {
+      "item_id": { "type": "string" },
+      "status": { "type": "string", "enum": ["draft", "ready"] },
+      "source_refs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["source_type", "file", "basis"],
+          "properties": {
+            "source_type": { "type": "string" },
+            "file": { "type": "string" },
+            "page": { "type": ["integer", "null"] },
+            "section": { "type": ["string", "null"] },
+            "basis": { "type": "string" },
+            "confidence": { "type": "string", "enum": ["high", "medium", "low"] }
+          }
+        }
+      },
+      "source_summaries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["summary", "confidence"],
+          "properties": {
+            "summary": { "type": "string" },
+            "confidence": { "type": "string", "enum": ["medium", "low"] }
+          }
+        }
+      },
+      "grounded_assumptions": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "alignment": {
+        "type": "object",
+        "required": ["area", "competency", "evidence"],
+        "properties": {
+          "area": { "type": "string" },
+          "competency": { "type": "string" },
+          "component": { "type": ["string", "null"] },
+          "claim": { "type": ["string", "null"] },
+          "evidence": { "type": "string" },
+          "standard": { "type": ["string", "null"] },
+          "grade_or_program": { "type": ["string", "null"] }
+        }
+      },
+      "difficulty": {
+        "type": "object",
+        "required": ["target_level", "justification"],
+        "properties": {
+          "target_level": {
+            "type": "string",
+            "enum": ["low", "medium", "high", "superior"]
+          },
+          "justification": { "type": "string" }
+        }
+      },
+      "context": { "type": "string" },
+      "enunciado": { "type": "string" },
+      "options": {
+        "type": "array",
+        "minItems": 4,
+        "maxItems": 4,
+        "items": {
+          "type": "object",
+          "required": ["label", "text"],
+          "properties": {
+            "label": { "type": "string", "enum": ["A", "B", "C", "D"] },
+            "text": { "type": "string" }
+          }
+        }
+      },
+      "clave": { "type": "string", "enum": ["A", "B", "C", "D"] },
+      "distractor_rationales": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      },
+      "quality_gates": {
+        "type": "object",
+        "required": [
+          "source_grounding",
+          "evidence_alignment",
+          "context_sufficiency",
+          "enunciado_clarity",
+          "option_quality",
+          "difficulty_fit"
+        ],
+        "properties": {
+          "source_grounding": { "type": "string", "enum": ["pass", "fail"] },
+          "evidence_alignment": { "type": "string", "enum": ["pass", "fail"] },
+          "context_sufficiency": { "type": "string", "enum": ["pass", "fail"] },
+          "enunciado_clarity": { "type": "string", "enum": ["pass", "fail"] },
+          "option_quality": { "type": "string", "enum": ["pass", "fail"] },
+          "difficulty_fit": { "type": "string", "enum": ["pass", "fail"] }
+        }
+      },
+      "warnings": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "revision_notes": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "student_view": {
+        "type": "object",
+        "required": ["context", "enunciado", "options"],
+        "properties": {
+          "context": { "type": "string" },
+          "enunciado": { "type": "string" },
+          "options": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "required": ["label", "text"],
+              "properties": {
+                "label": { "type": "string", "enum": ["A", "B", "C", "D"] },
+                "text": { "type": "string" }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

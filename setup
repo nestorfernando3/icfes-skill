@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# Instalador TUI para skill ICFES.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd -P)"
+SKILL_NAME="icfes-item-workflow"
+AGENT_NAME="icfes-item-coach.md"
+
+usage() {
+  cat <<'EOF'
+Uso:
+  ./setup                         # menu TUI
+  ./setup --target codex --scope user
+  ./setup --target codex --scope project [--project DIR]
+  ./setup --target claude --scope user
+  ./setup --target agents --scope project [--project DIR]
+
+Targets:
+  codex   -> ~/.codex/skills o .agents/skills
+  claude  -> ~/.claude/skills o .claude/skills
+  gemini  -> ~/.gemini/skills o .agents/skills
+  agents  -> .agents/skills portable
+EOF
+}
+
+TARGET=""
+SCOPE=""
+PROJECT_DIR="$(pwd)"
+COPY_MODE="copy"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --target) TARGET="${2:-}"; shift 2 ;;
+    --target=*) TARGET="${1#--target=}"; shift ;;
+    --scope) SCOPE="${2:-}"; shift 2 ;;
+    --scope=*) SCOPE="${1#--scope=}"; shift ;;
+    --project) PROJECT_DIR="${2:-}"; shift 2 ;;
+    --project=*) PROJECT_DIR="${1#--project=}"; shift ;;
+    --link) COPY_MODE="link"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Opcion desconocida: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+need_source() {
+  [ -f "$ROOT/skills/$SKILL_NAME/SKILL.md" ] || {
+    echo "Falta skill: $ROOT/skills/$SKILL_NAME/SKILL.md" >&2
+    exit 1
+  }
+}
+
+choose() {
+  local prompt="$1"
+  shift
+  local opts=("$@")
+  local i choice
+  echo
+  echo "$prompt"
+  for i in "${!opts[@]}"; do
+    printf "  %d) %s\n" "$((i + 1))" "${opts[$i]}"
+  done
+  printf "> "
+  read -r choice
+  case "$choice" in
+    ''|*[!0-9]*) echo "Seleccion invalida" >&2; exit 1 ;;
+  esac
+  [ "$choice" -ge 1 ] && [ "$choice" -le "${#opts[@]}" ] || {
+    echo "Seleccion invalida" >&2
+    exit 1
+  }
+  echo "${opts[$((choice - 1))]}"
+}
+
+detect_target() {
+  command -v codex >/dev/null 2>&1 && { echo "codex"; return; }
+  command -v claude >/dev/null 2>&1 && { echo "claude"; return; }
+  command -v gemini >/dev/null 2>&1 && { echo "gemini"; return; }
+  echo "agents"
+}
+
+dest_dir() {
+  local target="$1"
+  local scope="$2"
+  local project="$3"
+  case "$scope:$target" in
+    user:codex) echo "$HOME/.codex/skills" ;;
+    user:claude) echo "$HOME/.claude/skills" ;;
+    user:gemini) echo "$HOME/.gemini/skills" ;;
+    user:agents) echo "$HOME/.agents/skills" ;;
+    project:claude) echo "$project/.claude/skills" ;;
+    project:*) echo "$project/.agents/skills" ;;
+  esac
+}
+
+install_dir() {
+  local src="$1"
+  local dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  rm -rf "$dst"
+  if [ "$COPY_MODE" = "link" ]; then
+    ln -s "$src" "$dst"
+  else
+    cp -R "$src" "$dst"
+  fi
+}
+
+install_agent() {
+  local target="$1"
+  local scope="$2"
+  local project="$3"
+  local agent_src="$ROOT/agents/$AGENT_NAME"
+  [ -f "$agent_src" ] || return 0
+
+  if [ "$scope" = "project" ]; then
+    mkdir -p "$project/agents"
+    cp "$agent_src" "$project/agents/$AGENT_NAME"
+    return 0
+  fi
+
+  case "$target" in
+    codex) mkdir -p "$HOME/.codex/agents"; cp "$agent_src" "$HOME/.codex/agents/$AGENT_NAME" ;;
+    claude) mkdir -p "$HOME/.claude/agents"; cp "$agent_src" "$HOME/.claude/agents/$AGENT_NAME" ;;
+    gemini) mkdir -p "$HOME/.gemini/agents"; cp "$agent_src" "$HOME/.gemini/agents/$AGENT_NAME" ;;
+    agents) mkdir -p "$HOME/.agents/agents"; cp "$agent_src" "$HOME/.agents/agents/$AGENT_NAME" ;;
+  esac
+}
+
+run_install() {
+  local target="$1"
+  local scope="$2"
+  local project="$3"
+  need_source
+  case "$target" in
+    codex|claude|gemini|agents) ;;
+    *) echo "Target invalido: $target" >&2; exit 1 ;;
+  esac
+  case "$scope" in
+    user|project) ;;
+    *) echo "Scope invalido: $scope" >&2; exit 1 ;;
+  esac
+
+  local base dst
+  base="$(dest_dir "$target" "$scope" "$project")"
+  dst="$base/$SKILL_NAME"
+  mkdir -p "$base"
+  install_dir "$ROOT/skills/$SKILL_NAME" "$dst"
+  install_agent "$target" "$scope" "$project"
+
+  echo
+  echo "ICFES skill instalado."
+  echo "  target: $target"
+  echo "  scope:  $scope"
+  echo "  skill:  $dst"
+  if [ "$scope" = "project" ]; then
+    echo "  agente: $project/agents/$AGENT_NAME"
+  fi
+}
+
+if [ -z "$TARGET" ] || [ -z "$SCOPE" ]; then
+  echo "Instalador ICFES Skill"
+  echo "---------------------"
+  TARGET="$(choose "Agente destino:" "$(detect_target) (detectado)" "codex" "claude" "gemini" "agents")"
+  TARGET="${TARGET%% *}"
+  SCOPE="$(choose "Alcance:" "user" "project")"
+  if [ "$SCOPE" = "project" ]; then
+    printf "Proyecto [%s]: " "$PROJECT_DIR"
+    read -r answer
+    [ -n "${answer:-}" ] && PROJECT_DIR="$answer"
+  fi
+fi
+
+run_install "$TARGET" "$SCOPE" "$PROJECT_DIR"
