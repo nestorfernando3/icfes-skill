@@ -5,6 +5,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd -P)"
 SKILL_NAME="icfes-item-workflow"
 AGENT_NAME="icfes-item-coach.md"
+if [ -t 1 ]; then
+  BOLD="$(tput bold 2>/dev/null || true)"
+  DIM="$(tput dim 2>/dev/null || true)"
+  GREEN="$(tput setaf 2 2>/dev/null || true)"
+  CYAN="$(tput setaf 6 2>/dev/null || true)"
+  YELLOW="$(tput setaf 3 2>/dev/null || true)"
+  RED="$(tput setaf 1 2>/dev/null || true)"
+  RESET="$(tput sgr0 2>/dev/null || true)"
+else
+  BOLD=""; DIM=""; GREEN=""; CYAN=""; YELLOW=""; RED=""; RESET=""
+fi
 
 usage() {
   cat <<'EOF'
@@ -19,7 +30,11 @@ Targets:
   codex   -> ~/.codex/skills o .agents/skills
   claude  -> ~/.claude/skills o .claude/skills
   gemini  -> ~/.gemini/skills o .agents/skills
-  agents  -> .agents/skills portable
+  cursor  -> ~/.agents/skills o .agents/skills
+  windsurf -> ~/.agents/skills o .agents/skills
+  opencode -> ~/.config/opencode/skills o .opencode/skills
+  kiro    -> ~/.kiro/skills o .kiro/skills
+  agents  -> ~/.agents/skills o .agents/skills portable
 EOF
 }
 
@@ -54,7 +69,11 @@ normalize_target() {
     codex|Codex) echo "codex" ;;
     claude|Claude|claude-code|"Claude Code") echo "claude" ;;
     gemini|Gemini) echo "gemini" ;;
-    cursor|Cursor|windsurf|Windsurf|agents|Agents|portable|Portable) echo "agents" ;;
+    cursor|Cursor) echo "cursor" ;;
+    windsurf|Windsurf) echo "windsurf" ;;
+    opencode|OpenCode|open-code|"Open Code") echo "opencode" ;;
+    kiro|Kiro) echo "kiro" ;;
+    agents|Agents|portable|Portable|other|Other) echo "agents" ;;
     *) echo "$1" ;;
   esac
 }
@@ -74,11 +93,11 @@ choose() {
   local i choice opt opt_name
   while true; do
     echo >&2
-    echo "$prompt" >&2
+    echo "${BOLD}${prompt}${RESET}" >&2
     for i in "${!opts[@]}"; do
-      printf "  %d) %s\n" "$((i + 1))" "${opts[$i]}" >&2
+      printf "  ${CYAN}%d${RESET}) %s\n" "$((i + 1))" "${opts[$i]}" >&2
     done
-    printf "Enter para opcion 1. Escribe numero/nombre, o q para salir: " >&2
+    printf "${DIM}Enter = opcion 1. Numero/nombre, q = salir:${RESET} " >&2
     if [ -t 0 ] && [ -r /dev/tty ]; then
       read -r choice </dev/tty
     else
@@ -90,8 +109,8 @@ choose() {
     fi
     case "$choice" in
       q|quit|exit|salir)
-        echo "Instalacion cancelada." >&2
-        exit 0
+        echo "__exit__"
+        return 0
         ;;
       *[!0-9]*)
         for opt in "${opts[@]}"; do
@@ -101,14 +120,14 @@ choose() {
             return 0
           fi
         done
-        echo "Seleccion invalida: $choice" >&2
+        echo "${RED}Seleccion invalida:${RESET} $choice" >&2
         ;;
       *)
         if [ "$choice" -ge 1 ] && [ "$choice" -le "${#opts[@]}" ]; then
           echo "${opts[$((choice - 1))]}"
           return 0
         fi
-        echo "Seleccion invalida: $choice" >&2
+        echo "${RED}Seleccion invalida:${RESET} $choice" >&2
         ;;
     esac
   done
@@ -130,17 +149,79 @@ pick_target() {
   local detected
   detected="$(detect_target)"
   case "$detected" in
-    codex) choose "IDE/agente destino:" "codex (detectado)" "claude" "gemini" "agents" ;;
-    claude) choose "IDE/agente destino:" "claude (detectado)" "codex" "gemini" "agents" ;;
-    gemini) choose "IDE/agente destino:" "gemini (detectado)" "codex" "claude" "agents" ;;
-    *) choose "IDE/agente destino:" "codex" "claude" "gemini" "agents" ;;
+    codex)
+      choose "IDE/agente destino:" \
+        "codex (detectado)" \
+        "claude" \
+        "gemini" \
+        "cursor" \
+        "windsurf" \
+        "opencode" \
+        "kiro" \
+        "agents"
+      ;;
+    claude)
+      choose "IDE/agente destino:" \
+        "claude (detectado)" \
+        "codex" \
+        "gemini" \
+        "cursor" \
+        "windsurf" \
+        "opencode" \
+        "kiro" \
+        "agents"
+      ;;
+    gemini)
+      choose "IDE/agente destino:" \
+        "gemini (detectado)" \
+        "codex" \
+        "claude" \
+        "cursor" \
+        "windsurf" \
+        "opencode" \
+        "kiro" \
+        "agents"
+      ;;
+    opencode)
+      choose "IDE/agente destino:" \
+        "opencode (detectado)" \
+        "codex" \
+        "claude" \
+        "gemini" \
+        "cursor" \
+        "windsurf" \
+        "kiro" \
+        "agents"
+      ;;
+    kiro)
+      choose "IDE/agente destino:" \
+        "kiro (detectado)" \
+        "codex" \
+        "claude" \
+        "gemini" \
+        "cursor" \
+        "windsurf" \
+        "opencode" \
+        "agents"
+      ;;
+    *)
+      choose "IDE/agente destino:" \
+        "codex" \
+        "claude" \
+        "gemini" \
+        "cursor" \
+        "windsurf" \
+        "opencode" \
+        "kiro" \
+        "agents"
+      ;;
   esac
 }
 
 doctor() {
   need_source
   echo
-  echo "ICFES Skill OK."
+  echo "${GREEN}ICFES Skill OK.${RESET}"
   echo "  root:   $ROOT"
   echo "  skill:  $ROOT/skills/$SKILL_NAME"
   [ -f "$ROOT/agents/$AGENT_NAME" ] && echo "  agente: $ROOT/agents/$AGENT_NAME"
@@ -148,9 +229,10 @@ doctor() {
 
 run_menu() {
   local action picked
-  echo "ICFES Skill Setup"
-  echo "-----------------"
-  echo "Instala skill para Codex, Claude, Gemini o .agents portable."
+  echo "${BOLD}ICFES Skill Setup${RESET}"
+  echo "${DIM}-----------------${RESET}"
+  echo "Instala skill ICFES para tu IDE/agente."
+  echo "${DIM}Global = disponible en todos los proyectos. Proyecto = queda versionable en repo.${RESET}"
 
   action="$(choose "Que quieres hacer:" \
     "global (instalar para todos los proyectos)" \
@@ -159,21 +241,28 @@ run_menu() {
     "doctor (verificar instalacion)" \
     "exit (salir)")"
   action="${action%% *}"
+  if [ "$action" = "__exit__" ]; then
+    echo "${YELLOW}Instalacion cancelada.${RESET}"
+    exit 0
+  fi
 
   case "$action" in
     global)
       picked="$(pick_target)"
+      if [ "$picked" = "__exit__" ]; then echo "${YELLOW}Instalacion cancelada.${RESET}"; exit 0; fi
       TARGET="$(normalize_target "${picked%% *}")"
       SCOPE="user"
       ;;
     current)
       picked="$(pick_target)"
+      if [ "$picked" = "__exit__" ]; then echo "${YELLOW}Instalacion cancelada.${RESET}"; exit 0; fi
       TARGET="$(normalize_target "${picked%% *}")"
       SCOPE="project"
       PROJECT_DIR="$(pwd)"
       ;;
     other)
       picked="$(pick_target)"
+      if [ "$picked" = "__exit__" ]; then echo "${YELLOW}Instalacion cancelada.${RESET}"; exit 0; fi
       TARGET="$(normalize_target "${picked%% *}")"
       SCOPE="project"
       PROJECT_DIR="$(prompt_path "$PROJECT_DIR")"
@@ -193,6 +282,8 @@ detect_target() {
   command -v codex >/dev/null 2>&1 && { echo "codex"; return; }
   command -v claude >/dev/null 2>&1 && { echo "claude"; return; }
   command -v gemini >/dev/null 2>&1 && { echo "gemini"; return; }
+  command -v opencode >/dev/null 2>&1 && { echo "opencode"; return; }
+  command -v kiro-cli >/dev/null 2>&1 && { echo "kiro"; return; }
   echo "agents"
 }
 
@@ -204,8 +295,14 @@ dest_dir() {
     user:codex) echo "$HOME/.codex/skills" ;;
     user:claude) echo "$HOME/.claude/skills" ;;
     user:gemini) echo "$HOME/.gemini/skills" ;;
+    user:opencode) echo "$HOME/.config/opencode/skills" ;;
+    user:kiro) echo "$HOME/.kiro/skills" ;;
+    user:cursor) echo "$HOME/.agents/skills" ;;
+    user:windsurf) echo "$HOME/.agents/skills" ;;
     user:agents) echo "$HOME/.agents/skills" ;;
     project:claude) echo "$project/.claude/skills" ;;
+    project:opencode) echo "$project/.opencode/skills" ;;
+    project:kiro) echo "$project/.kiro/skills" ;;
     project:*) echo "$project/.agents/skills" ;;
   esac
 }
@@ -239,7 +336,9 @@ install_agent() {
     codex) mkdir -p "$HOME/.codex/agents"; cp "$agent_src" "$HOME/.codex/agents/$AGENT_NAME" ;;
     claude) mkdir -p "$HOME/.claude/agents"; cp "$agent_src" "$HOME/.claude/agents/$AGENT_NAME" ;;
     gemini) mkdir -p "$HOME/.gemini/agents"; cp "$agent_src" "$HOME/.gemini/agents/$AGENT_NAME" ;;
-    agents) mkdir -p "$HOME/.agents/agents"; cp "$agent_src" "$HOME/.agents/agents/$AGENT_NAME" ;;
+    opencode) mkdir -p "$HOME/.config/opencode/agents"; cp "$agent_src" "$HOME/.config/opencode/agents/$AGENT_NAME" ;;
+    kiro) mkdir -p "$HOME/.kiro/agents"; cp "$agent_src" "$HOME/.kiro/agents/$AGENT_NAME" ;;
+    cursor|windsurf|agents) mkdir -p "$HOME/.agents/agents"; cp "$agent_src" "$HOME/.agents/agents/$AGENT_NAME" ;;
   esac
 }
 
@@ -249,7 +348,7 @@ run_install() {
   local project="$3"
   need_source
   case "$target" in
-    codex|claude|gemini|agents) ;;
+    codex|claude|gemini|cursor|windsurf|opencode|kiro|agents) ;;
     *) echo "Target invalido: $target" >&2; exit 1 ;;
   esac
   case "$scope" in
@@ -265,7 +364,7 @@ run_install() {
   install_agent "$target" "$scope" "$project"
 
   echo
-  echo "ICFES skill instalado."
+  echo "${GREEN}ICFES skill instalado.${RESET}"
   echo "  target: $target"
   echo "  scope:  $scope"
   echo "  skill:  $dst"

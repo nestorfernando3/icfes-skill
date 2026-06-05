@@ -58,7 +58,11 @@ IDE:
 1) Codex
 2) Claude
 3) Gemini
-4) .agents portable
+4) Cursor
+5) Windsurf
+6) OpenCode
+7) Kiro
+8) .agents portable
 ```
 
 ## Instalacion En Un Comando
@@ -103,12 +107,34 @@ Gemini:
 icfes-skill install --target gemini --scope user
 ```
 
+OpenCode:
+
+```bash
+icfes-skill install --target opencode --scope user
+```
+
+Kiro:
+
+```bash
+icfes-skill install --target kiro --scope user
+```
+
+Cursor/Windsurf usan instalacion portable `.agents`:
+
+```bash
+icfes-skill install --target cursor --scope user
+icfes-skill install --target windsurf --scope user
+```
+
 Rutas globales usadas:
 
 ```text
 ~/.codex/skills/icfes-item-workflow
 ~/.claude/skills/icfes-item-workflow
 ~/.gemini/skills/icfes-item-workflow
+~/.config/opencode/skills/icfes-item-workflow
+~/.kiro/skills/icfes-item-workflow
+~/.agents/skills/icfes-item-workflow
 ```
 
 ## Instalacion Por Proyecto
@@ -174,6 +200,10 @@ Targets:
 codex
 claude
 gemini
+cursor
+windsurf
+opencode
+kiro
 agents
 ```
 
