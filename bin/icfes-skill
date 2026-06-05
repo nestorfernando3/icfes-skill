@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="${ICFES_SKILL_ROOT:-$(cd "$(dirname "$0")/.." && pwd -P)}"
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in
+    /*) ;;
+    *) SOURCE="$DIR/$SOURCE" ;;
+  esac
+done
+ROOT="${ICFES_SKILL_ROOT:-$(cd "$(dirname "$SOURCE")/.." && pwd -P)}"
 
 case "${1:-}" in
   install|setup|"")
