@@ -34,6 +34,16 @@ Targets:
   windsurf -> ~/.agents/skills o .agents/skills
   opencode -> ~/.config/opencode/skills o .opencode/skills
   kiro    -> ~/.kiro/skills o .kiro/skills
+  aider   -> ~/.agents/skills o .agents/skills
+  goose   -> ~/.config/goose/skills o .goose/skills
+  zed     -> ~/.agents/skills o .agents/skills
+  vscode  -> ~/.agents/skills o .agents/skills
+  cline   -> ~/.agents/skills o .agents/skills
+  roo     -> ~/.agents/skills o .agents/skills
+  continue -> ~/.agents/skills o .agents/skills
+  trae    -> ~/.agents/skills o .agents/skills
+  augment -> ~/.agents/skills o .agents/skills
+  amp     -> ~/.agents/skills o .agents/skills
   agents  -> ~/.agents/skills o .agents/skills portable
 EOF
 }
@@ -74,6 +84,16 @@ normalize_target() {
     windsurf|Windsurf) echo "windsurf" ;;
     opencode|OpenCode|open-code|"Open Code") echo "opencode" ;;
     kiro|Kiro) echo "kiro" ;;
+    aider|Aider) echo "aider" ;;
+    goose|Goose) echo "goose" ;;
+    zed|Zed|ZED) echo "zed" ;;
+    vscode|VSCode|"VS Code"|code|Code) echo "vscode" ;;
+    cline|Cline) echo "cline" ;;
+    roo|Roo|roo-code|"Roo Code") echo "roo" ;;
+    continue|Continue) echo "continue" ;;
+    trae|Trae) echo "trae" ;;
+    augment|Augment) echo "augment" ;;
+    amp|Amp|AMP) echo "amp" ;;
     agents|Agents|portable|Portable|other|Other) echo "agents" ;;
     *) echo "$1" ;;
   esac
@@ -230,77 +250,45 @@ prompt_path() {
   [ -n "${answer:-}" ] && echo "$answer" || echo "$default_path"
 }
 
-pick_targets() {
-  local detected
+target_options() {
+  local detected opt canonical
   detected="$(detect_target)"
-  case "$detected" in
-    codex)
-      choose_multi "IDE/agente destino (puedes escoger varios):" \
-        "codex (detectado)" \
-        "claude" \
-        "gemini" \
-        "cursor" \
-        "windsurf" \
-        "opencode" \
-        "kiro" \
-        "agents"
-      ;;
-    claude)
-      choose_multi "IDE/agente destino (puedes escoger varios):" \
-        "claude (detectado)" \
-        "codex" \
-        "gemini" \
-        "cursor" \
-        "windsurf" \
-        "opencode" \
-        "kiro" \
-        "agents"
-      ;;
-    gemini)
-      choose_multi "IDE/agente destino (puedes escoger varios):" \
-        "gemini (detectado)" \
-        "codex" \
-        "claude" \
-        "cursor" \
-        "windsurf" \
-        "opencode" \
-        "kiro" \
-        "agents"
-      ;;
-    opencode)
-      choose_multi "IDE/agente destino (puedes escoger varios):" \
-        "opencode (detectado)" \
-        "codex" \
-        "claude" \
-        "gemini" \
-        "cursor" \
-        "windsurf" \
-        "kiro" \
-        "agents"
-      ;;
-    kiro)
-      choose_multi "IDE/agente destino (puedes escoger varios):" \
-        "kiro (detectado)" \
-        "codex" \
-        "claude" \
-        "gemini" \
-        "cursor" \
-        "windsurf" \
-        "opencode" \
-        "agents"
-      ;;
-    *)
-      choose_multi "IDE/agente destino (puedes escoger varios):" \
-        "codex" \
-        "claude" \
-        "gemini" \
-        "cursor" \
-        "windsurf" \
-        "opencode" \
-        "kiro" \
-        "agents"
-      ;;
-  esac
+  for opt in \
+    codex \
+    claude \
+    gemini \
+    cursor \
+    windsurf \
+    opencode \
+    kiro \
+    aider \
+    goose \
+    zed \
+    vscode \
+    cline \
+    roo \
+    continue \
+    trae \
+    augment \
+    amp \
+    agents
+  do
+    canonical="$(normalize_target "$opt")"
+    if [ "$canonical" = "$detected" ]; then
+      printf '%s (detectado)\n' "$opt"
+    else
+      printf '%s\n' "$opt"
+    fi
+  done
+}
+
+pick_targets() {
+  local opts opt
+  opts=()
+  while IFS= read -r opt; do
+    opts+=("$opt")
+  done < <(target_options)
+  choose_multi "IDE/agente destino (puedes escoger varios):" "${opts[@]}"
 }
 
 doctor() {
@@ -369,6 +357,11 @@ detect_target() {
   command -v gemini >/dev/null 2>&1 && { echo "gemini"; return; }
   command -v opencode >/dev/null 2>&1 && { echo "opencode"; return; }
   command -v kiro-cli >/dev/null 2>&1 && { echo "kiro"; return; }
+  command -v aider >/dev/null 2>&1 && { echo "aider"; return; }
+  command -v goose >/dev/null 2>&1 && { echo "goose"; return; }
+  command -v code >/dev/null 2>&1 && { echo "vscode"; return; }
+  command -v zed >/dev/null 2>&1 && { echo "zed"; return; }
+  command -v amp >/dev/null 2>&1 && { echo "amp"; return; }
   echo "agents"
 }
 
@@ -382,12 +375,23 @@ dest_dir() {
     user:gemini) echo "$HOME/.gemini/skills" ;;
     user:opencode) echo "$HOME/.config/opencode/skills" ;;
     user:kiro) echo "$HOME/.kiro/skills" ;;
+    user:goose) echo "$HOME/.config/goose/skills" ;;
     user:cursor) echo "$HOME/.agents/skills" ;;
     user:windsurf) echo "$HOME/.agents/skills" ;;
+    user:aider) echo "$HOME/.agents/skills" ;;
+    user:zed) echo "$HOME/.agents/skills" ;;
+    user:vscode) echo "$HOME/.agents/skills" ;;
+    user:cline) echo "$HOME/.agents/skills" ;;
+    user:roo) echo "$HOME/.agents/skills" ;;
+    user:continue) echo "$HOME/.agents/skills" ;;
+    user:trae) echo "$HOME/.agents/skills" ;;
+    user:augment) echo "$HOME/.agents/skills" ;;
+    user:amp) echo "$HOME/.agents/skills" ;;
     user:agents) echo "$HOME/.agents/skills" ;;
     project:claude) echo "$project/.claude/skills" ;;
     project:opencode) echo "$project/.opencode/skills" ;;
     project:kiro) echo "$project/.kiro/skills" ;;
+    project:goose) echo "$project/.goose/skills" ;;
     project:*) echo "$project/.agents/skills" ;;
   esac
 }
@@ -423,7 +427,8 @@ install_agent() {
     gemini) mkdir -p "$HOME/.gemini/agents"; cp "$agent_src" "$HOME/.gemini/agents/$AGENT_NAME" ;;
     opencode) mkdir -p "$HOME/.config/opencode/agents"; cp "$agent_src" "$HOME/.config/opencode/agents/$AGENT_NAME" ;;
     kiro) mkdir -p "$HOME/.kiro/agents"; cp "$agent_src" "$HOME/.kiro/agents/$AGENT_NAME" ;;
-    cursor|windsurf|agents) mkdir -p "$HOME/.agents/agents"; cp "$agent_src" "$HOME/.agents/agents/$AGENT_NAME" ;;
+    goose) mkdir -p "$HOME/.config/goose/agents"; cp "$agent_src" "$HOME/.config/goose/agents/$AGENT_NAME" ;;
+    cursor|windsurf|aider|zed|vscode|cline|roo|continue|trae|augment|amp|agents) mkdir -p "$HOME/.agents/agents"; cp "$agent_src" "$HOME/.agents/agents/$AGENT_NAME" ;;
   esac
 }
 
@@ -433,7 +438,7 @@ run_install() {
   local project="$3"
   need_source
   case "$target" in
-    codex|claude|gemini|cursor|windsurf|opencode|kiro|agents) ;;
+    codex|claude|gemini|cursor|windsurf|opencode|kiro|aider|goose|zed|vscode|cline|roo|continue|trae|augment|amp|agents) ;;
     *) echo "Target invalido: $target" >&2; exit 1 ;;
   esac
   case "$scope" in

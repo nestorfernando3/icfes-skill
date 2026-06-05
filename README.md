@@ -62,7 +62,17 @@ IDE:
 5) Windsurf
 6) OpenCode
 7) Kiro
-8) .agents portable
+8) Aider
+9) Goose
+10) Zed
+11) VS Code
+12) Cline
+13) Roo Code
+14) Continue
+15) Trae
+16) Augment
+17) Amp
+18) .agents portable
 ```
 
 Puedes escoger varios IDEs a la vez:
@@ -148,6 +158,7 @@ Rutas globales usadas:
 ~/.gemini/skills/icfes-item-workflow
 ~/.config/opencode/skills/icfes-item-workflow
 ~/.kiro/skills/icfes-item-workflow
+~/.config/goose/skills/icfes-item-workflow
 ~/.agents/skills/icfes-item-workflow
 ```
 
@@ -218,6 +229,16 @@ cursor
 windsurf
 opencode
 kiro
+aider
+goose
+zed
+vscode
+cline
+roo
+continue
+trae
+augment
+amp
 agents
 ```
 
